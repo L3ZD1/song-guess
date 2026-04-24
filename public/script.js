@@ -17,7 +17,7 @@ function play() {
 async function submitGuess() {
     const guess = document.getElementById("guess").value;
 
-    const res = await fetch(`/api/guess?q=${guess}`);
+    const res = await fetch(`/api/guess?q=${encodeURIComponent(guess)}`);
     const data = await res.json();
 
     if (data.correct) {
