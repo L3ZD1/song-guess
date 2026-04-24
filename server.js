@@ -11,10 +11,9 @@ const PORT = process.env.PORT || 3000;
 let cache = [];
 let currentTrack = null;
 
-// 🔥 надёжная загрузка
+// 🎵 загрузка треков
 async function loadTracks() {
     const random = Math.floor(Math.random() * 1000);
-
     const url = `https://api.deezer.com/search?q=pop&index=${random}`;
 
     const response = await fetch(url);
@@ -32,12 +31,12 @@ async function loadTracks() {
         throw new Error("Invalid JSON from Deezer");
     }
 
-    if (!data.data) {
-        throw new Error("No data field");
+    if (!data.data || data.data.length === 0) {
+        throw new Error("No tracks found");
     }
 
     cache = data.data
-        .filter(t => t.preview)
+        .filter(t => t.preview) // только с аудио
         .map(t => ({
             title: t.title.toLowerCase(),
             artist: t.artist.name.toLowerCase(),
@@ -49,7 +48,7 @@ async function loadTracks() {
     }
 }
 
-// 🎵 получить трек
+// 🎧 получить трек (с retry)
 app.get("/api/track", async (req, res) => {
     try {
         if (cache.length === 0) {
@@ -67,44 +66,29 @@ app.get("/api/track", async (req, res) => {
         });
 
     } catch (err) {
-        console.error("TRACK ERROR:", err.message);
-
-        // 🔥 fallback (чтобы игра не ломалась)
-        app.get("/api/track", async (req, res) => {
-    try {
-        if (cache.length === 0) {
-            await loadTracks();
-        }
-
-        currentTrack = cache.pop();
-
-        if (!currentTrack || !currentTrack.preview) {
-            throw new Error("Invalid track");
-        }
-
-        res.json({
-            preview: currentTrack.preview
-        });
-
-    } catch (err) {
-        console.log("Retrying...");
+        console.log("Ошибка, пробуем ещё раз:", err.message);
 
         try {
+            // 🔥 retry
             await loadTracks();
             currentTrack = cache.pop();
+
+            if (!currentTrack || !currentTrack.preview) {
+                throw new Error("Retry failed");
+            }
 
             res.json({
                 preview: currentTrack.preview
             });
-        } catch {
+
+        } catch (err2) {
+            console.error("Полный провал:", err2.message);
             res.status(500).json({ error: "No tracks available" });
         }
     }
 });
-    }
-});
 
-// 🧠 проверка
+// 🧠 проверка ответа
 app.get("/api/guess", (req, res) => {
     if (!currentTrack) {
         return res.json({ error: "No track loaded" });
@@ -124,6 +108,7 @@ app.get("/api/guess", (req, res) => {
     });
 });
 
+// 🚀 запуск
 app.listen(PORT, () => {
     console.log("Server running on port", PORT);
 });
