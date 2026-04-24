@@ -23,6 +23,10 @@ async function getTrack() {
 
   const downloadInfo = await random.getDownloadInfo();
 
+  if (!downloadInfo || downloadInfo.length === 0) {
+    throw new Error("Нет ссылки на трек");
+  }
+
   const url = downloadInfo[0].directLink;
 
   return {
