@@ -70,9 +70,37 @@ app.get("/api/track", async (req, res) => {
         console.error("TRACK ERROR:", err.message);
 
         // 🔥 fallback (чтобы игра не ломалась)
+        app.get("/api/track", async (req, res) => {
+    try {
+        if (cache.length === 0) {
+            await loadTracks();
+        }
+
+        currentTrack = cache.pop();
+
+        if (!currentTrack || !currentTrack.preview) {
+            throw new Error("Invalid track");
+        }
+
         res.json({
-            preview: "https://cdns-preview-1.dzcdn.net/stream/c-1.mp3"
+            preview: currentTrack.preview
         });
+
+    } catch (err) {
+        console.log("Retrying...");
+
+        try {
+            await loadTracks();
+            currentTrack = cache.pop();
+
+            res.json({
+                preview: currentTrack.preview
+            });
+        } catch {
+            res.status(500).json({ error: "No tracks available" });
+        }
+    }
+});
     }
 });
 
