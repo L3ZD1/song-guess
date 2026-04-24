@@ -9,7 +9,9 @@ app.use(express.static("public"));
 const client = new YandexMusicClient();
 
 // ❗ можно оставить без токена (иногда работает)
-await client.init();
+await client.init({
+  token: "3:1777032952.5.0.1777032948021:bKOXWQ:620d.1.2:1|1762460045.-1.20002.2:4.3:1777032952.6:2131964624.7:1777032952|3:11860514.959770.zkiMOzde4WbGlQHm1vFee5_f9lY"
+});
 
 // 🎵 получаем трек
 async function getTrack() {
