@@ -41,6 +41,10 @@ async function getTrack() {
 
   const data = await res.json();
 
+  if (!data.tracks || !data.tracks.items) {
+    throw new Error("Spotify не вернул треки");
+  }
+
   const tracks = data.tracks.items;
 
   // фильтр только с превью
@@ -54,8 +58,8 @@ async function getTrack() {
 
   return {
     preview: random.preview_url,
-    answer: random.name.toLowerCase(),
-    artist: random.artists[0].name,
+    answer: random.name?.toLowerCase() || "unknown",
+    artist: random.artists?.[0]?.name || "unknown",
   };
 }
 
