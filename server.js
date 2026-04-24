@@ -1,47 +1,53 @@
-import express from "express";
-import cors from "cors";
-import { YMApi } from "ym-api-meowed";
+const express = require("express");
+const fetch = require("node-fetch");
+const cors = require("cors");
 
 const app = express();
 app.use(cors());
 app.use(express.static("public"));
 
-const api = new YMApi();
+let currentTrack = null;
 
-await api.init({
-  access_token: process.env.YANDEX_TOKEN,
-  uid: 0
+// получить случайный трек
+app.get("/api/track", async (req, res) => {
+    try {
+        const random = Math.floor(Math.random() * 100);
+        const url = `https://api.deezer.com/search?q=pop&index=${random}`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const track = data.data[Math.floor(Math.random() * data.data.length)];
+
+        currentTrack = {
+            title: track.title.toLowerCase(),
+            artist: track.artist.name.toLowerCase(),
+            preview: track.preview
+        };
+
+        res.json({
+            preview: track.preview
+        });
+
+    } catch (err) {
+        res.status(500).send("Error");
+    }
 });
 
-// 🎵 получаем трек
-async function getTrack() {
-  const chart = await api.getChart("world");
+// проверка ответа
+app.get("/api/guess", (req, res) => {
+    const guess = req.query.q.toLowerCase();
 
-  const tracks = chart.tracks.results;
+    let score = 0;
 
-  const random = tracks[Math.floor(Math.random() * tracks.length)];
+    if (guess.includes(currentTrack.title)) score += 700;
+    if (guess.includes(currentTrack.artist)) score += 300;
 
-  const download = await api.getMp3DownloadUrl(random.id);
-
-  if (!download) {
-    throw new Error("Нет mp3");
-  }
-
-  return {
-    preview: download,
-    answer: random.title.toLowerCase(),
-    artist: random.artists[0].name
-  };
-}
-
-app.get("/song", async (req, res) => {
-  try {
-    const track = await getTrack();
-    res.json(track);
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Ошибка получения трека" });
-  }
+    res.json({
+        correct: score > 0,
+        score,
+        answer: currentTrack
+    });
 });
 
-app.listen(3000, () => console.log("Server running"));
+app.listen(3000, () => console.log("Server running on 3000"));
