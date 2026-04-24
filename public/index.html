@@ -1,103 +1,23 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>SongGuesser</title>
-<style>
-body { font-family: Arial; background:#121212; color:white; text-align:center; padding:30px; }
-button { padding:10px 20px; margin:10px; border:none; border-radius:8px; background:#1db954; color:white; cursor:pointer; }
-input { padding:10px; width:260px; border-radius:6px; border:none; }
-</style>
+    <title>SongGuesser</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <h1>🎵 SongGuesser</h1>
 
-<button onclick="startGame()">Начать</button>
+<button onclick="startGame()">Start</button>
+<button onclick="play()">▶ Play</button>
 
-<div id="game" style="display:none;">
-  <p id="timer">Время: 10</p>
-  <button onclick="play()">▶️ Играть</button><br>
-  <input id="answer" placeholder="Название песни"><br>
-  <button onclick="check()">Ответить</button>
-  <p id="result"></p>
-  <p id="score">Очки: 0</p>
-</div>
+<input id="guess" placeholder="Название или артист">
+<button onclick="submitGuess()">Guess</button>
 
-<script>
-let song;
-let score = 0;
-let time = 10;
-let timer;
+<p id="result"></p>
+<p id="score">Score: 0</p>
+<p id="streak">Streak: 0</p>
 
-async function loadSong() {
-  const res = await fetch("/song");
-  song = await res.json();
-}
-
-function startGame() {
-  document.getElementById("game").style.display = "block";
-  nextRound();
-}
-
-function play() {
-  if (!song.preview) {
-    alert("❌ У трека нет превью, берём другой...");
-    nextRound();
-    return;
-  }
-
-  let audio = new Audio(song.preview);
-  audio.currentTime = Math.random() * 20;
-  audio.play();
-
-  setTimeout(() => audio.pause(), 5000);
-}
-
-function startTimer() {
-  time = 10;
-  document.getElementById("timer").innerText = "Время: " + time;
-
-  timer = setInterval(() => {
-    time--;
-    document.getElementById("timer").innerText = "Время: " + time;
-
-    if (time <= 0) {
-      clearInterval(timer);
-      lose();
-    }
-  }, 1000);
-}
-
-function check() {
-  clearInterval(timer);
-
-  let input = document.getElementById("answer").value.toLowerCase();
-
-  if (input.includes(song.answer)) {
-    score += 10;
-    document.getElementById("result").innerText = "✅ Верно!";
-  } else {
-    document.getElementById("result").innerText =
-      "❌ " + song.answer + " — " + song.artist;
-  }
-
-  document.getElementById("score").innerText = "Очки: " + score;
-  nextRound();
-}
-
-function lose() {
-  document.getElementById("result").innerText =
-    "⏰ Время вышло! Ответ: " + song.answer;
-  nextRound();
-}
-
-async function nextRound() {
-  await loadSong();
-  document.getElementById("answer").value = "";
-  startTimer();
-}
-</script>
-
+<script src="script.js"></script>
 </body>
 </html>
