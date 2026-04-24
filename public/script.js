@@ -6,6 +6,11 @@ async function startGame() {
     const res = await fetch("/api/track");
     const data = await res.json();
 
+    if (!data.preview) {
+        console.log("Нет аудио");
+        return;
+    }
+
     audio.src = data.preview;
 }
 
