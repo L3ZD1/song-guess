@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <title>SongGuesser</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- стили -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,30 +12,22 @@
     <h1>🎵 SongGuesser</h1>
 
     <div class="card">
-
-        <!-- плеер -->
         <div id="player"></div>
 
-        <!-- управление -->
         <div class="controls">
             <input id="guess" placeholder="Введите название или артиста">
             <button onclick="submitGuess()">Guess</button>
         </div>
 
-        <!-- результат -->
         <p id="result"></p>
 
-        <!-- статистика -->
         <div class="stats">
             <span id="score">Score: 0</span>
             <span id="streak">Streak: 0</span>
         </div>
-
     </div>
 </div>
 
-<!-- скрипт -->
 <script src="script.js"></script>
-
 </body>
 </html>
