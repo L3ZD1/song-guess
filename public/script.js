@@ -29,8 +29,7 @@ async function submitGuess() {
     if (data.correct) {
         score += data.score;
         streak++;
-        document.getElementById("result").innerText =
-            `✅ ${data.answer.title} - ${data.answer.artist}`;
+        document.getElementById("result").innerText =`✅ ${data.answer.title}\n— ${data.answer.artist}`;
     } else {
         streak = 0;
         document.getElementById("result").innerText =
