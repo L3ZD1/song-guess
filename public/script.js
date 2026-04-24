@@ -1,67 +1,71 @@
-let audio = new Audio();
 let score = 0;
 let streak = 0;
-let isPlaying = false;
 
-// 🎵 старт игры
+// 🎵 загрузка нового трека
 async function startGame() {
-    const res = await fetch("/api/track");
-    const data = await res.json();
+    try {
+        const res = await fetch("/api/track");
+        const data = await res.json();
 
-    if (!data.preview) {
+        if (!data.embed) {
+            document.getElementById("result").innerText =
+                "⚠️ Ошибка загрузки трека";
+            return;
+        }
+
+        // вставляем iframe SoundCloud
+        document.getElementById("player").innerHTML = data.embed;
+
+        // очищаем поле
+        document.getElementById("guess").value = "";
+
+    } catch (err) {
+        console.error(err);
         document.getElementById("result").innerText =
-            "⚠️ Нет трека (попробуй ещё раз)";
-        return;
+            "❌ Ошибка сервера";
     }
-
-    audio.src = data.preview;
-    audio.pause();
-    isPlaying = false;
-    updateButton();
-}
-
-// ▶ / ⏸
-function togglePlay() {
-    if (!audio.src) {
-        startGame();
-        return;
-    }
-
-    if (isPlaying) {
-        audio.pause();
-    } else {
-        audio.play();
-    }
-
-    isPlaying = !isPlaying;
-    updateButton();
-}
-
-function updateButton() {
-    document.getElementById("playBtn").innerText =
-        isPlaying ? "⏸" : "▶";
 }
 
 // 🎯 угадывание
 async function submitGuess() {
     const guess = document.getElementById("guess").value;
 
-    const res = await fetch(`/api/guess?q=${encodeURIComponent(guess)}`);
-    const data = await res.json();
+    if (!guess) return;
 
-    if (data.correct) {
-        score += data.score;
-        streak++;
-        document.getElementById("result").innerText =
-            `✅ ${data.answer.title}\n— ${data.answer.artist}`;
-    } else {
-        streak = 0;
-        document.getElementById("result").innerText =
-            `❌ ${data.answer.title}\n— ${data.answer.artist}`;
+    try {
+        const res = await fetch(`/api/guess?q=${encodeURIComponent(guess)}`);
+        const data = await res.json();
+
+        if (data.correct) {
+            score += 1000;
+            streak++;
+
+            document.getElementById("result").innerText =
+                `✅ ${data.answer}`;
+        } else {
+            streak = 0;
+
+            document.getElementById("result").innerText =
+                `❌ ${data.answer}`;
+        }
+
+        document.getElementById("score").innerText = "Score: " + score;
+        document.getElementById("streak").innerText = "Streak: " + streak;
+
+        // новый раунд
+        setTimeout(startGame, 1500);
+
+    } catch (err) {
+        console.error(err);
     }
-
-    document.getElementById("score").innerText = "Score: " + score;
-    document.getElementById("streak").innerText = "Streak: " + streak;
-
-    startGame();
 }
+
+// Enter = Guess
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+        submitGuess();
+    }
+});
+
+// автостарт
+startGame();
