@@ -8,53 +8,48 @@ app.use(express.static("public"));
 
 const PORT = process.env.PORT || 3000;
 
-// 🔥 кеш треков
 let cache = [];
 let currentTrack = null;
 
-// 🎵 загрузка пачки треков
+// 🔥 надёжная загрузка
 async function loadTracks() {
+    const random = Math.floor(Math.random() * 1000);
+
+    const url = `https://api.deezer.com/search?q=pop&index=${random}`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error("Deezer request failed");
+    }
+
+    const text = await response.text();
+
+    let data;
     try {
-        const random = Math.floor(Math.random() * 100);
-        const url = `https://api.deezer.com/search?q=pop&index=${random}`;
+        data = JSON.parse(text);
+    } catch {
+        throw new Error("Invalid JSON from Deezer");
+    }
 
-        const response = await fetch(url);
+    if (!data.data) {
+        throw new Error("No data field");
+    }
 
-        // 🔥 сначала текст, потом парсим
-        const text = await response.text();
+    cache = data.data
+        .filter(t => t.preview)
+        .map(t => ({
+            title: t.title.toLowerCase(),
+            artist: t.artist.name.toLowerCase(),
+            preview: t.preview
+        }));
 
-        let data;
-        try {
-            data = JSON.parse(text);
-        } catch (e) {
-            console.error("Deezer вернул не JSON:", text);
-            throw new Error("Invalid JSON from Deezer");
-        }
-
-        if (!data.data || data.data.length === 0) {
-            throw new Error("No tracks found");
-        }
-
-        cache = data.data
-            .filter(track => track.preview)
-            .map(track => ({
-                title: track.title.toLowerCase(),
-                artist: track.artist.name.toLowerCase(),
-                preview: track.preview
-            }));
-
-        if (cache.length === 0) {
-            throw new Error("No preview tracks");
-        }
-
-    } catch (err) {
-        console.error("Ошибка loadTracks:", err.message);
-        cache = []; // сброс
-        throw err;
+    if (cache.length === 0) {
+        throw new Error("No preview tracks");
     }
 }
 
-// 🎧 получить трек
+// 🎵 получить трек
 app.get("/api/track", async (req, res) => {
     try {
         if (cache.length === 0) {
@@ -63,16 +58,25 @@ app.get("/api/track", async (req, res) => {
 
         currentTrack = cache.pop();
 
+        if (!currentTrack || !currentTrack.preview) {
+            throw new Error("Invalid track");
+        }
+
         res.json({
             preview: currentTrack.preview
         });
 
     } catch (err) {
-        res.status(500).json({ error: "Error loading track" });
+        console.error("TRACK ERROR:", err.message);
+
+        // 🔥 fallback (чтобы игра не ломалась)
+        res.json({
+            preview: "https://cdns-preview-1.dzcdn.net/stream/c-1.mp3"
+        });
     }
 });
 
-// 🧠 проверка ответа
+// 🧠 проверка
 app.get("/api/guess", (req, res) => {
     if (!currentTrack) {
         return res.json({ error: "No track loaded" });
@@ -92,7 +96,6 @@ app.get("/api/guess", (req, res) => {
     });
 });
 
-// 🚀 запуск
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log("Server running on port", PORT);
 });
