@@ -1,82 +1,43 @@
 import express from "express";
-import fetch from "node-fetch";
 import cors from "cors";
+import { YandexMusicClient } from "yandex-music-client";
 
 const app = express();
 app.use(cors());
 app.use(express.static("public"));
 
-const CLIENT_ID = process.env.CLIENT_ID;
-const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const client = new YandexMusicClient();
 
-let accessToken = "";
+// ❗ можно оставить без токена (иногда работает)
+await client.init();
 
-// 🔑 получаем токен Spotify
-async function getToken() {
-  const res = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: {
-      Authorization:
-        "Basic " +
-        Buffer.from(CLIENT_ID + ":" + CLIENT_SECRET).toString("base64"),
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: "grant_type=client_credentials",
-  });
-
-  const data = await res.json();
-  accessToken = data.access_token;
-}
-
-// 🎵 получаем случайный трек
+// 🎵 получаем трек
 async function getTrack() {
-  const res = await fetch(
-    "https://api.spotify.com/v1/search?q=pop&type=track&limit=50",
-    {
-      headers: {
-        Authorization: "Bearer " + accessToken,
-      },
-    }
-  );
+  const chart = await client.chart("world");
 
-  const data = await res.json();
+  const tracks = chart.tracks;
 
-  if (!data.tracks || !data.tracks.items) {
-    throw new Error("Spotify не вернул треки");
-  }
+  const random = tracks[Math.floor(Math.random() * tracks.length)];
 
-  const tracks = data.tracks.items;
+  const downloadInfo = await random.getDownloadInfo();
 
-  // фильтр только с превью
-  const valid = tracks.filter((t) => t.preview_url);
-
-  if (valid.length === 0) {
-    throw new Error("Нет треков с preview");
-  }
-
-  const random = valid[Math.floor(Math.random() * valid.length)];
+  const url = downloadInfo[0].directLink;
 
   return {
-    preview: random.preview_url,
-    answer: random.name?.toLowerCase() || "unknown",
-    artist: random.artists?.[0]?.name || "unknown",
+    preview: url,
+    answer: random.title.toLowerCase(),
+    artist: random.artists[0].name,
   };
 }
 
-// 🌐 API
 app.get("/song", async (req, res) => {
   try {
-    if (!accessToken) await getToken();
-
     const track = await getTrack();
     res.json(track);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Ошибка получения трека" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Ошибка" });
   }
 });
-console.log(random);
-// 🚀 запуск
-app.listen(3000, () => {
-  console.log("🔥 Server running on http://localhost:3000");
-});
+
+app.listen(3000, () => console.log("Server running"));
