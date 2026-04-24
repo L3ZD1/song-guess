@@ -13,19 +13,33 @@ let currentTrack = null;
 
 // 🎵 загрузка треков
 async function loadTracks() {
-    const random = Math.floor(Math.random() * 1000);
-    const url = `https://api.deezer.com/search?q=pop&index=${random}`;
+    for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+            const random = Math.floor(Math.random() * 1000);
+            const url = `https://api.deezer.com/search?q=pop&index=${random}`;
 
-    const response = await fetch(url);
-    const data = await response.json();
+            const response = await fetch(url);
+            const data = await response.json();
 
-    cache = data.data
-        .filter(t => t.preview)
-        .map(t => ({
-            title: t.title.toLowerCase(),
-            artist: t.artist.name.toLowerCase(),
-            preview: t.preview
-        }));
+            const tracks = data.data
+                ?.filter(t => t.preview)
+                ?.map(t => ({
+                    title: t.title.toLowerCase(),
+                    artist: t.artist.name.toLowerCase(),
+                    preview: t.preview
+                }));
+
+            if (tracks && tracks.length > 0) {
+                cache = tracks;
+                return;
+            }
+
+        } catch (e) {
+            console.log("Ошибка попытки", attempt + 1);
+        }
+    }
+
+    throw new Error("Не удалось загрузить треки");
 }
 
 // 🎧 получить трек
@@ -37,13 +51,31 @@ app.get("/api/track", async (req, res) => {
 
         currentTrack = cache.pop();
 
+        if (!currentTrack?.preview) {
+            throw new Error("Нет preview");
+        }
+
         res.json({
             preview: currentTrack.preview
         });
 
     } catch (err) {
-        console.error(err);
-        res.json({ preview: null });
+        console.error("TRACK FAIL:", err.message);
+
+        // 🔥 ВАЖНО: пробуем ещё раз сразу
+        try {
+            await loadTracks();
+            currentTrack = cache.pop();
+
+            res.json({
+                preview: currentTrack.preview
+            });
+        } catch {
+            // 👉 только если вообще всё умерло
+            res.json({
+                preview: null
+            });
+        }
     }
 });
 
