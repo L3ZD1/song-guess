@@ -1,7 +1,7 @@
 let score = 0;
 let streak = 0;
 
-// 🎵 загрузка нового трека
+// 🎵 загрузка трека
 async function startGame() {
     try {
         const res = await fetch("/api/track");
@@ -9,20 +9,16 @@ async function startGame() {
 
         if (!data.embed) {
             document.getElementById("result").innerText =
-                "⚠️ Ошибка загрузки трека";
+                "⏳ Пробуем другой трек...";
+            setTimeout(startGame, 1000);
             return;
         }
 
-        // вставляем iframe SoundCloud
         document.getElementById("player").innerHTML = data.embed;
-
-        // очищаем поле
         document.getElementById("guess").value = "";
 
     } catch (err) {
         console.error(err);
-        document.getElementById("result").innerText =
-            "❌ Ошибка сервера";
     }
 }
 
@@ -32,40 +28,30 @@ async function submitGuess() {
 
     if (!guess) return;
 
-    try {
-        const res = await fetch(`/api/guess?q=${encodeURIComponent(guess)}`);
-        const data = await res.json();
+    const res = await fetch(`/api/guess?q=${encodeURIComponent(guess)}`);
+    const data = await res.json();
 
-        if (data.correct) {
-            score += 1000;
-            streak++;
-
-            document.getElementById("result").innerText =
-                `✅ ${data.answer}`;
-        } else {
-            streak = 0;
-
-            document.getElementById("result").innerText =
-                `❌ ${data.answer}`;
-        }
-
-        document.getElementById("score").innerText = "Score: " + score;
-        document.getElementById("streak").innerText = "Streak: " + streak;
-
-        // новый раунд
-        setTimeout(startGame, 1500);
-
-    } catch (err) {
-        console.error(err);
+    if (data.correct) {
+        score += 1000;
+        streak++;
+        document.getElementById("result").innerText =
+            `✅ ${data.answer}`;
+    } else {
+        streak = 0;
+        document.getElementById("result").innerText =
+            `❌ ${data.answer}`;
     }
+
+    document.getElementById("score").innerText = "Score: " + score;
+    document.getElementById("streak").innerText = "Streak: " + streak;
+
+    setTimeout(startGame, 1500);
 }
 
 // Enter = Guess
 document.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-        submitGuess();
-    }
+    if (e.key === "Enter") submitGuess();
 });
 
-// автостарт
+// старт
 startGame();
