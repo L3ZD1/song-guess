@@ -7,11 +7,12 @@ async function startGame() {
     const data = await res.json();
 
     if (!data.preview) {
-        console.log("Нет аудио");
+        document.getElementById("result").innerText =
+            "⚠️ Нет трека (попробуй ещё раз)";
         return;
     }
 
-    audio.src = data.preview;
+    audio.src = "/api/audio?url=" + encodeURIComponent(data.preview);
 }
 
 function play() {
