@@ -17,38 +17,18 @@ async function loadTracks() {
     const url = `https://api.deezer.com/search?q=pop&index=${random}`;
 
     const response = await fetch(url);
-
-    if (!response.ok) {
-        throw new Error("Deezer request failed");
-    }
-
-    const text = await response.text();
-
-    let data;
-    try {
-        data = JSON.parse(text);
-    } catch {
-        throw new Error("Invalid JSON from Deezer");
-    }
-
-    if (!data.data || data.data.length === 0) {
-        throw new Error("No tracks found");
-    }
+    const data = await response.json();
 
     cache = data.data
-        .filter(t => t.preview) // только с аудио
+        .filter(t => t.preview)
         .map(t => ({
             title: t.title.toLowerCase(),
             artist: t.artist.name.toLowerCase(),
             preview: t.preview
         }));
-
-    if (cache.length === 0) {
-        throw new Error("No preview tracks");
-    }
 }
 
-// 🎧 получить трек (с retry)
+// 🎧 получить трек
 app.get("/api/track", async (req, res) => {
     try {
         if (cache.length === 0) {
@@ -57,38 +37,43 @@ app.get("/api/track", async (req, res) => {
 
         currentTrack = cache.pop();
 
-        if (!currentTrack || !currentTrack.preview) {
-            throw new Error("Invalid track");
-        }
-
         res.json({
             preview: currentTrack.preview
         });
 
     } catch (err) {
-        console.log("Ошибка, пробуем ещё раз:", err.message);
-
-        try {
-            // 🔥 retry
-            await loadTracks();
-            currentTrack = cache.pop();
-
-            if (!currentTrack || !currentTrack.preview) {
-                throw new Error("Retry failed");
-            }
-
-            res.json({
-                preview: currentTrack.preview
-            });
-
-        } catch (err2) {
-            console.error("Полный провал:", err2.message);
-            res.status(500).json({ error: "No tracks available" });
-        }
+        console.error(err);
+        res.json({ preview: null });
     }
 });
 
-// 🧠 проверка ответа
+// 🔥 ПРОКСИ АУДИО (ГЛАВНОЕ)
+app.get("/api/audio", async (req, res) => {
+    try {
+        const url = req.query.url;
+
+        if (!url) {
+            return res.status(400).send("No URL");
+        }
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            return res.status(500).send("Audio fetch failed");
+        }
+
+        const buffer = await response.buffer();
+
+        res.set("Content-Type", "audio/mpeg");
+        res.send(buffer);
+
+    } catch (err) {
+        console.error("Audio proxy error:", err.message);
+        res.status(500).send("Audio error");
+    }
+});
+
+// 🧠 проверка
 app.get("/api/guess", (req, res) => {
     if (!currentTrack) {
         return res.json({ error: "No track loaded" });
@@ -108,7 +93,6 @@ app.get("/api/guess", (req, res) => {
     });
 });
 
-// 🚀 запуск
 app.listen(PORT, () => {
     console.log("Server running on port", PORT);
 });
