@@ -9,6 +9,6 @@
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5",
-    "ym-api-meowed": "^2.1.0"
+    "ym-api-meowed": "github:meowed/ym-api"
   }
 }
