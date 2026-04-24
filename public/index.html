@@ -41,9 +41,16 @@ function startGame() {
 }
 
 function play() {
+  if (!song.preview) {
+    alert("❌ У трека нет превью, берём другой...");
+    nextRound();
+    return;
+  }
+
   let audio = new Audio(song.preview);
   audio.currentTime = Math.random() * 20;
   audio.play();
+
   setTimeout(() => audio.pause(), 5000);
 }
 
