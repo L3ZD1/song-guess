@@ -68,7 +68,7 @@ app.get("/api/track", async (req, res) => {
         });
 
     } catch (err) {
-        res.status(500).send("Error loading track");
+        res.status(500).json({ error: "Error loading track" });
     }
 });
 
