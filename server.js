@@ -75,7 +75,7 @@ app.get("/song", async (req, res) => {
     res.status(500).json({ error: "Ошибка получения трека" });
   }
 });
-
+console.log(random);
 // 🚀 запуск
 app.listen(3000, () => {
   console.log("🔥 Server running on http://localhost:3000");
