@@ -1,38 +1,36 @@
 import express from "express";
 import cors from "cors";
-import { YandexMusicClient } from "yandex-music-client";
+import { YMApi } from "ym-api-meowed";
 
 const app = express();
 app.use(cors());
 app.use(express.static("public"));
 
-const client = new YandexMusicClient();
+const api = new YMApi();
 
-// ❗ можно оставить без токена (иногда работает)
-await client.init({
-  token: process.env.YANDEX_TOKEN
+await api.init({
+  access_token: process.env.YANDEX_TOKEN,
+  uid: 0
 });
 
 // 🎵 получаем трек
 async function getTrack() {
-  const chart = await client.chart("world");
+  const chart = await api.getChart("world");
 
-  const tracks = chart.tracks;
+  const tracks = chart.tracks.results;
 
   const random = tracks[Math.floor(Math.random() * tracks.length)];
 
-  const downloadInfo = await random.getDownloadInfo();
+  const download = await api.getMp3DownloadUrl(random.id);
 
-  if (!downloadInfo || downloadInfo.length === 0) {
-    throw new Error("Нет ссылки на трек");
+  if (!download) {
+    throw new Error("Нет mp3");
   }
 
-  const url = downloadInfo[0].directLink;
-
   return {
-    preview: url,
+    preview: download,
     answer: random.title.toLowerCase(),
-    artist: random.artists[0].name,
+    artist: random.artists[0].name
   };
 }
 
@@ -42,7 +40,7 @@ app.get("/song", async (req, res) => {
     res.json(track);
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "Ошибка" });
+    res.status(500).json({ error: "Ошибка получения трека" });
   }
 });
 
