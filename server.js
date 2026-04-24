@@ -8,69 +8,60 @@ app.use(express.static("public"));
 
 const PORT = process.env.PORT || 3000;
 
-const JAMENDO_ID = "758b1d9d"; // 👈 вставь сюда
-
-let cache = [];
 let currentTrack = null;
 
-// 🎵 загрузка треков
-async function loadTracks() {
-    const url = `https://api.jamendo.com/v3.0/tracks/?client_id=${JAMENDO_ID}&format=json&limit=20`;
-
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (!data.results || data.results.length === 0) {
-        throw new Error("No tracks");
-    }
-
-    cache = data.results.map(t => ({
-        title: t.name.toLowerCase(),
-        artist: t.artist_name.toLowerCase(),
-        preview: t.audio // 🔥 прямой mp3
-    }));
-}
+// 🔥 список треков (можешь расширить)
+const tracks = [
+    "https://soundcloud.com/forss/flickermood",
+    "https://soundcloud.com/odesza/say-my-name",
+    "https://soundcloud.com/rlgrime/core",
+    "https://soundcloud.com/porter-robinson/shelter",
+    "https://soundcloud.com/flume/never-be-like-you"
+];
 
 // 🎧 получить трек
 app.get("/api/track", async (req, res) => {
     try {
-        if (cache.length === 0) {
-            await loadTracks();
-        }
+        const random = Math.floor(Math.random() * tracks.length);
+        const trackUrl = tracks[random];
 
-        const randomIndex = Math.floor(Math.random() * cache.length);
-        currentTrack = cache.splice(randomIndex, 1)[0];
+        const oembed = await fetch(
+            `https://soundcloud.com/oembed?format=json&url=${trackUrl}`
+        );
+
+        const data = await oembed.json();
+
+        currentTrack = {
+            title: data.title.toLowerCase()
+        };
 
         res.json({
-            preview: currentTrack.preview
+            embed: data.html,
+            answer: data.title
         });
 
     } catch (err) {
         console.error(err);
-        res.json({ preview: null });
+        res.json({ embed: null });
     }
 });
 
-// 🧠 проверка ответа
+// 🧠 проверка
 app.get("/api/guess", (req, res) => {
     if (!currentTrack) {
-        return res.json({ error: "No track loaded" });
+        return res.json({ error: "No track" });
     }
 
     const guess = (req.query.q || "").toLowerCase();
 
-    let score = 0;
-
-    if (guess.includes(currentTrack.title)) score += 700;
-    if (guess.includes(currentTrack.artist)) score += 300;
+    const correct = guess.includes(currentTrack.title);
 
     res.json({
-        correct: score > 0,
-        score,
-        answer: currentTrack
+        correct,
+        answer: currentTrack.title
     });
 });
 
 app.listen(PORT, () => {
-    console.log("Server running on port", PORT);
+    console.log("Server running");
 });
