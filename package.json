@@ -1,7 +1,6 @@
 {
   "name": "songguesser",
   "version": "1.0.0",
-  "description": "SongGuesser with Deezer API",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
