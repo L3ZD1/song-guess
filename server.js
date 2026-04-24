@@ -14,19 +14,44 @@ let currentTrack = null;
 
 // 🎵 загрузка пачки треков
 async function loadTracks() {
-    const random = Math.floor(Math.random() * 100);
-    const url = `https://api.deezer.com/search?q=pop&index=${random}`;
+    try {
+        const random = Math.floor(Math.random() * 100);
+        const url = `https://api.deezer.com/search?q=pop&index=${random}`;
 
-    const response = await fetch(url);
-    const data = await response.json();
+        const response = await fetch(url);
 
-    cache = data.data
-        .filter(t => t.preview) // только с аудио
-        .map(track => ({
-            title: track.title.toLowerCase(),
-            artist: track.artist.name.toLowerCase(),
-            preview: track.preview
-        }));
+        // 🔥 сначала текст, потом парсим
+        const text = await response.text();
+
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error("Deezer вернул не JSON:", text);
+            throw new Error("Invalid JSON from Deezer");
+        }
+
+        if (!data.data || data.data.length === 0) {
+            throw new Error("No tracks found");
+        }
+
+        cache = data.data
+            .filter(track => track.preview)
+            .map(track => ({
+                title: track.title.toLowerCase(),
+                artist: track.artist.name.toLowerCase(),
+                preview: track.preview
+            }));
+
+        if (cache.length === 0) {
+            throw new Error("No preview tracks");
+        }
+
+    } catch (err) {
+        console.error("Ошибка loadTracks:", err.message);
+        cache = []; // сброс
+        throw err;
+    }
 }
 
 // 🎧 получить трек
