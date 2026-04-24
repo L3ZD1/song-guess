@@ -1,50 +1,54 @@
 body {
     background: #121212;
-    font-family: Arial, sans-serif;
     color: white;
+    font-family: Arial, sans-serif;
     margin: 0;
+    text-align: center;
 }
 
+/* контейнер */
 .container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 60px;
+    margin-top: 50px;
 }
 
-.title {
+/* заголовок */
+h1 {
     margin-bottom: 20px;
 }
 
+/* карточка */
 .card {
     background: #181818;
     padding: 20px;
     border-radius: 16px;
-    width: 320px;
+    width: 360px;
+    margin: auto;
     box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-    text-align: center;
 }
 
-.cover {
+/* SoundCloud iframe */
+#player iframe {
     width: 100%;
-    height: 200px;
-    background: linear-gradient(135deg, #1db954, #191414);
     border-radius: 12px;
     margin-bottom: 15px;
 }
 
-.controls {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
+/* инпут */
+input {
+    padding: 10px;
+    width: 200px;
+    border-radius: 8px;
+    border: none;
+    margin-right: 5px;
 }
 
+/* кнопка */
 button {
-    background: #1db954;
-    border: none;
-    color: white;
     padding: 10px 14px;
+    border: none;
     border-radius: 8px;
+    background: #1db954;
+    color: white;
     cursor: pointer;
     font-weight: bold;
 }
@@ -53,24 +57,14 @@ button:hover {
     background: #1ed760;
 }
 
-#playBtn {
-    font-size: 18px;
-    width: 45px;
-}
-
-input {
-    padding: 10px;
-    border-radius: 8px;
-    border: none;
-    width: 140px;
-}
-
+/* результат */
 #result {
     margin-top: 15px;
-    min-height: 40px;
+    min-height: 30px;
     word-break: break-word;
 }
 
+/* статистика */
 .stats {
     margin-top: 10px;
     display: flex;
