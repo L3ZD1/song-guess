@@ -1,15 +1,5 @@
-{
-  "name": "songguesser",
-  "version": "1.0.0",
-  "description": "Song guessing game",
-  "main": "server.js",
-  "type": "module",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "node-fetch": "^3.3.2",
-    "cors": "^2.8.5"
-  }
+"dependencies": {
+  "express": "^4.18.2",
+  "cors": "^2.8.5",
+  "yandex-music-client": "^2.0.0"
 }
