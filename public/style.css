@@ -1,10 +1,32 @@
+body {
+    background: #121212;
+    color: white;
+    font-family: Arial;
+    text-align: center;
+    margin: 0;
+}
+
+.container {
+    margin-top: 50px;
+}
+
+.card {
+    background: #181818;
+    padding: 20px;
+    border-radius: 16px;
+    width: 360px;
+    margin: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+/* 🎧 плеер */
 #player {
     position: relative;
     overflow: hidden;
     border-radius: 12px;
 }
 
-/* 🔥 скрываем ВЕРХ (где название) */
+/* скрываем название сверху */
 #player::before {
     content: "";
     position: absolute;
@@ -16,7 +38,7 @@
     z-index: 2;
 }
 
-/* 🔥 скрываем НИЗ */
+/* скрываем низ */
 #player::after {
     content: "";
     position: absolute;
@@ -26,4 +48,46 @@
     height: 60px;
     background: #181818;
     z-index: 2;
+}
+
+#player iframe {
+    width: 100%;
+    border-radius: 12px;
+}
+
+/* controls */
+.controls {
+    margin-top: 15px;
+}
+
+input {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    width: 200px;
+}
+
+button {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    background: #1db954;
+    color: white;
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+button:hover {
+    background: #1ed760;
+}
+
+#result {
+    margin-top: 15px;
+    min-height: 30px;
+}
+
+.stats {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
 }
