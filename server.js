@@ -6,37 +6,54 @@ const app = express();
 app.use(cors());
 app.use(express.static("public"));
 
+const PORT = process.env.PORT || 3000;
+
+// 🔥 кеш треков
+let cache = [];
 let currentTrack = null;
 
-// получить случайный трек
-app.get("/api/track", async (req, res) => {
-    try {
-        const random = Math.floor(Math.random() * 100);
-        const url = `https://api.deezer.com/search?q=pop&index=${random}`;
+// 🎵 загрузка пачки треков
+async function loadTracks() {
+    const random = Math.floor(Math.random() * 100);
+    const url = `https://api.deezer.com/search?q=pop&index=${random}`;
 
-        const response = await fetch(url);
-        const data = await response.json();
+    const response = await fetch(url);
+    const data = await response.json();
 
-        const track = data.data[Math.floor(Math.random() * data.data.length)];
-
-        currentTrack = {
+    cache = data.data
+        .filter(t => t.preview) // только с аудио
+        .map(track => ({
             title: track.title.toLowerCase(),
             artist: track.artist.name.toLowerCase(),
             preview: track.preview
-        };
+        }));
+}
+
+// 🎧 получить трек
+app.get("/api/track", async (req, res) => {
+    try {
+        if (cache.length === 0) {
+            await loadTracks();
+        }
+
+        currentTrack = cache.pop();
 
         res.json({
-            preview: track.preview
+            preview: currentTrack.preview
         });
 
     } catch (err) {
-        res.status(500).send("Error");
+        res.status(500).send("Error loading track");
     }
 });
 
-// проверка ответа
+// 🧠 проверка ответа
 app.get("/api/guess", (req, res) => {
-    const guess = req.query.q.toLowerCase();
+    if (!currentTrack) {
+        return res.json({ error: "No track loaded" });
+    }
+
+    const guess = (req.query.q || "").toLowerCase();
 
     let score = 0;
 
@@ -50,4 +67,7 @@ app.get("/api/guess", (req, res) => {
     });
 });
 
-app.listen(3000, () => console.log("Server running on 3000"));
+// 🚀 запуск
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
