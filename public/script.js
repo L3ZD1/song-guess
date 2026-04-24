@@ -12,12 +12,12 @@ async function startGame() {
         return;
     }
 
-    audio.src = "/api/audio?url=" + encodeURIComponent(data.preview);
+    audio.src = data.preview;
 }
 
 function play() {
     audio.currentTime = 0;
-    audio.play();
+    audio.play().catch(e => console.log(e));
 }
 
 async function submitGuess() {
