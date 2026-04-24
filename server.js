@@ -38,7 +38,8 @@ app.get("/api/track", async (req, res) => {
             await loadTracks();
         }
 
-        currentTrack = cache.pop();
+        const randomIndex = Math.floor(Math.random() * cache.length);
+        currentTrack = cache.splice(randomIndex, 1)[0];
 
         res.json({
             preview: currentTrack.preview
